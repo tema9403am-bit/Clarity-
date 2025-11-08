@@ -3,12 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Clarity Chain — miniapp</title>
-
-<!-- CDN: near-api-js -->
-<script src="https://cdn.jsdelivr.net/npm/near-api-js@2.1.4/dist/near-api-js.min.js"></script>
-<!-- CDN: WalletConnect v1 -->
-<script src="https://unpkg.com/@walletconnect/client@1.8.0/dist/umd/index.min.js"></script>
+<title>Clarity Chain — Hot Wallet</title>
 
 <style>
   :root{--bg:#000;--muted:#8f98a0;--accent:#00aaff}
@@ -22,10 +17,6 @@
   .menu .btn{display:block;width:86%;max-width:360px;margin:10px auto}
   input[type="text"], input[type="number"]{padding:10px;width:86%;max-width:360px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;margin:8px 0}
   .small{font-size:13px;color:#bbb;margin-top:10px}
-  #wcUriBox{word-break:break-all;background:#0b0b0b;padding:10px;border-radius:8px;border:1px solid #222;margin-top:10px}
-  #modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
-  #modal .card{background:#081018;padding:18px;border-radius:10px;width:90%;max-width:420px;text-align:center}
-  .note{font-size:13px;color:#9aa;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
@@ -43,13 +34,12 @@
         <button id="experimentBtn" class="btn">Участвовать в эксперименте</button>
         <button id="statsBtn" class="btn">Статистика</button>
       </div>
-      <div class="small">Версия: pilot • Бекенд не требуется</div>
+      <div class="small">Версия: pilot • Только Hot Wallet</div>
     </div>
 
     <div id="experimentScreen" class="hidden">
       <h1>Участвуй в эксперименте</h1>
-      <input id="walletInput" type="text" placeholder="Адрес NEAR (опционально)" />
-      <button id="chooseConnectBtn" class="btn">Подключить кошелёк</button>
+      <button id="connectHotWallet" class="btn">Подключить Hot Wallet</button>
       <div id="walletState" class="small" style="margin-top:10px"></div>
       <div style="margin-top:14px">
         <button id="backToMenu" class="btn ghost">Назад</button>
@@ -71,32 +61,6 @@
     <div id="debug" class="small" style="margin-top:18px;color:#666"></div>
   </div>
 
-  <div id="modal" class="hidden">
-    <div class="card">
-      <h3>Выберите способ подключения</h3>
-      <div style="margin-top:12px">
-        <button id="modalNearBtn" class="btn">NEAR Wallet</button>
-      </div>
-      <div style="margin-top:8px">
-        <button id="modalWcBtn" class="btn">WalletConnect</button>
-      </div>
-      <div class="note">В Telegram WebView может блокироваться popups — при проблемах используйте NEAR Wallet.</div>
-      <div style="margin-top:14px"><button id="modalClose" class="btn ghost">Отмена</button></div>
-    </div>
-  </div>
-
-  <div id="wcModal" class="hidden" style="position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9998">
-    <div class="card">
-      <h3>WalletConnect URI</h3>
-      <div id="wcUriBox"></div>
-      <div class="note">Откройте этот URI в кошельке или отсканируйте QR. Telegram WebView может ограничивать deeplink.</div>
-      <div style="margin-top:12px">
-        <button id="wcOpenBtn" class="btn">Открыть</button>
-        <button id="wcCloseBtn" class="btn ghost">Закрыть</button>
-      </div>
-    </div>
-  </div>
-
 <script>
 (async function(){
   const startScreen = document.getElementById('startScreen');
@@ -104,12 +68,8 @@
   const experimentScreen = document.getElementById('experimentScreen');
   const whereScreen = document.getElementById('whereScreen');
   const statsScreen = document.getElementById('statsScreen');
-  const debug = document.getElementById('debug');
   const walletState = document.getElementById('walletState');
-  const modal = document.getElementById('modal');
-  const wcModal = document.getElementById('wcModal');
-  const wcUriBox = document.getElementById('wcUriBox');
-  const wcOpenBtn = document.getElementById('wcOpenBtn');
+  const debug = document.getElementById('debug');
 
   // Навигация
   document.getElementById('startBtn').onclick = ()=>{ startScreen.classList.add('hidden'); mainMenu.classList.remove('hidden'); };
@@ -120,93 +80,45 @@
   document.getElementById('experimentBtn').onclick = ()=>{ mainMenu.classList.add('hidden'); experimentScreen.classList.remove('hidden'); };
   document.getElementById('backToMenu').onclick = ()=>{ experimentScreen.classList.add('hidden'); mainMenu.classList.remove('hidden'); };
 
-  document.getElementById('chooseConnectBtn').onclick = ()=>{ modal.classList.remove('hidden'); };
-  document.getElementById('modalClose').onclick = ()=>{ modal.classList.add('hidden'); };
-
-  const NEAR_NETWORK = 'testnet'; 
-  const NEAR_CONTRACT = '';
-  let nearConnection = null;
-  let walletConnection = null;
-
-  async function initNear() {
-    const nearApi = window.nearApi;
-    const { connect, keyStores, WalletConnection } = nearApi;
-    const nearConfig = {
-      networkId: NEAR_NETWORK,
-      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-      nodeUrl: 'https://rpc.testnet.near.org',
-      walletUrl: 'https://wallet.testnet.near.org',
-      helperUrl: 'https://helper.testnet.near.org'
-    };
-    nearConnection = await connect(nearConfig);
-    walletConnection = new WalletConnection(nearConnection, 'clarity-chain-session');
-    if(walletConnection.isSignedIn()){
-      const accountId = walletConnection.getAccountId();
-      walletState.innerHTML = `✅ NEAR wallet: <b>${accountId}</b>`;
-      showSendButtonIfSignedIn();
-    } else walletState.innerHTML = 'NEAR кошелёк: не подключён';
+  // Проверяем, Telegram ли это
+  const tg = window.Telegram?.WebApp;
+  if (!tg) {
+    walletState.innerHTML = "⚠️ Открой приложение через Telegram Mini App!";
+    debug.innerText = "Не обнаружен Telegram WebApp API";
+    return;
   }
 
-  document.getElementById('modalNearBtn').onclick = async ()=>{
-    modal.classList.add('hidden');
-    await initNear();
-    walletConnection.requestSignIn(NEAR_CONTRACT || undefined, 'Clarity Chain');
-  };
+  tg.ready();
+  tg.expand();
 
-  // WALLETCONNECT
-  let wcConnector = null;
-  let wcConnectedAccount = null;
+  // Подключение Hot Wallet
+  document.getElementById('connectHotWallet').onclick = async () => {
+    try {
+      const user = tg.initDataUnsafe?.user;
+      if (!user) {
+        walletState.innerHTML = "🚫 Не удалось получить данные Telegram.";
+        return;
+      }
 
-  document.getElementById('modalWcBtn').onclick = async ()=>{
-    modal.classList.add('hidden');
-    if(!window.WalletConnect){ alert('WalletConnect не загружен'); return; }
-    wcConnector = new window.WalletConnect.default({
-      bridge: "https://bridge.walletconnect.org",
-      qrcodeModal: null
-    });
-    if(!wcConnector.connected) await wcConnector.createSession();
-    const uri = wcConnector.uri;
-    wcUriBox.textContent = uri;
-    wcModal.classList.remove('hidden');
-    wcOpenBtn.onclick = ()=>window.open(uri, '_blank');
-    wcConnector.on("connect", (error, payload)=>{
-      if(error) return console.error(error);
-      const accounts = payload.params[0].accounts;
-      wcConnectedAccount = accounts[0];
-      walletState.innerHTML = `✅ WalletConnect: <b>${wcConnectedAccount}</b>`;
-      wcModal.classList.add('hidden');
-    });
-    wcConnector.on("disconnect", ()=>{ walletState.innerHTML = 'WalletConnect: отключён'; });
-  };
-  document.getElementById('wcCloseBtn').onclick = ()=>wcModal.classList.add('hidden');
+      // Отправка запроса на сервер (опционально)
+      const response = await fetch("https://your-backend.com/api/connect-hotwallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram_id: user.id, username: user.username })
+      });
 
-  async function sendTransaction(){
-    if(!walletConnection || !walletConnection.isSignedIn()){ alert('Сначала подключите NEAR'); return; }
-    const amount = parseFloat(document.getElementById('sendAmount').value);
-    if(!amount || amount<=0){ alert('Введите сумму'); return; }
-    const { utils: nearUtils } = window.nearApi;
-    const yocto = nearUtils.format.parseNearAmount(String(amount));
-    const RECEIVER = document.getElementById('walletInput').value.trim() || 'i6430499141.tg';
-    walletState.innerHTML = 'Отправка транзакции...';
-    const result = await walletConnection.account().sendMoney(RECEIVER, yocto);
-    walletState.innerHTML = `✅ Отправлено ${amount} NEAR → ${RECEIVER}`;
-  }
-
-  function showSendButtonIfSignedIn(){
-    if(walletConnection && walletConnection.isSignedIn()){
-      const dom = document.createElement('div');
-      dom.id = 'sendArea';
-      dom.style.marginTop = '12px';
-      dom.innerHTML = `
-        <input id="sendAmount" type="number" step="0.001" placeholder="Сумма NEAR (0.01)" />
-        <div style="margin-top:8px"><button id="sendBtn" class="btn">Отправить</button></div>
-      `;
-      experimentScreen.appendChild(dom);
-      document.getElementById('sendBtn').onclick = sendTransaction;
+      const data = await response.json();
+      if (data.success) {
+        walletState.innerHTML = `✅ Hot Wallet подключён для пользователя <b>@${user.username || user.id}</b>`;
+      } else {
+        walletState.innerHTML = "Ошибка при подключении Hot Wallet.";
+      }
+    } catch (err) {
+      console.error(err);
+      walletState.innerHTML = "❌ Ошибка подключения Hot Wallet.";
     }
-  }
+  };
 
-  await initNear();
 })();
 </script>
 </body>
