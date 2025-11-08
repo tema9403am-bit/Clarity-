@@ -3,125 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clarity Chain</title>
+  <title>Clarity App</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
-      background: #0d0d0d;
+      font-family: "Inter", system-ui, sans-serif;
+      background: linear-gradient(180deg, #0f2027, #203a43, #2c5364);
       color: white;
-      font-family: system-ui, -apple-system, sans-serif;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
-      text-align: center;
-      overflow: hidden;
-    }
-
-    #loader {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #0d0d0d;
-      z-index: 9999;
-    }
-
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid #222;
-      border-top-color: #00A8FF;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    #app {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 80px 20px 20px; /* отступ сверху, чтобы не прилипало к статус-бару Telegram */
     }
 
     h1 {
-      color: #00A8FF;
-      margin: 0;
-      font-size: 32px;
+      font-size: 28px;
+      margin-bottom: 40px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.4);
     }
 
-    p {
-      margin: 0;
-      font-size: 16px;
-      opacity: 0.85;
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 80%;
+      max-width: 320px;
     }
 
     button {
-      background: #00A8FF;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
       color: white;
-      font-weight: 600;
+      font-size: 18px;
+      padding: 16px;
+      width: 100%;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(6px);
     }
 
     button:hover {
-      background: #0090DD;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
     }
 
-    .fade-in {
-      animation: fadeIn 0.6s ease forwards;
+    .content {
+      display: none;
+      text-align: center;
+      width: 80%;
+      max-width: 400px;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .back {
+      margin-top: 40px;
+      color: #aaa;
+      cursor: pointer;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div id="loader">
-    <div class="spinner"></div>
-  </div>
+  <h1>Clarity</h1>
 
-  <div id="app">
-    <h1>Clarity Chain</h1>
-    <p>Тестовая версия мини-приложения.</p>
-    <button id="confirmBtn">Подтвердить вход</button>
-    <p>Привет, Greedy 👋</p>
-  </div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const loader = document.getElementById("loader");
-      const app = document.getElementById("app");
-      const confirmBtn = document.getElementById("confirmBtn");
-
-      // имитация загрузки
-      setTimeout(() => {
-        loader.style.display = "none";
-        app.style.display = "flex";
-        app.classList.add("fade-in");
-      }, 1000);
-
-      // обработчик кнопки
-      confirmBtn.addEventListener("click", () => {
-        confirmBtn.textContent = "Вход подтвержден ✅";
-        confirmBtn.style.background = "#2ECC71";
-      });
-    });
-  </script>
-</body>
-</html>
+  <div class="menu" id="menu">
+    <button onclick="openSection('about')">🌀 Где я
