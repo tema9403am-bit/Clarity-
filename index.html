@@ -68,4 +68,40 @@
   <h1>Clarity</h1>
 
   <div class="menu" id="menu">
-    <button onclick="openSection('about')">🌀 Где я
+    <button onclick="openSection('about')">🌀 Где я?</button>
+    <button onclick="openSection('presale')">🚀 Пресейл</button>
+    <button onclick="openSection('stats')">📊 Статистика</button>
+  </div>
+
+  <div class="content" id="about">
+    <h2>🌀 Где я?</h2>
+    <p>Ты находишься в экосистеме Clarity — месте, где прозрачность и участие формируют новую экономику доверия.</p>
+    <div class="back" onclick="goBack()">← Назад</div>
+  </div>
+
+  <div class="content" id="presale">
+    <h2>🚀 Пресейл</h2>
+    <p>Здесь скоро появится окно раннего участия. Следи за обновлениями!</p>
+    <div class="back" onclick="goBack()">← Назад</div>
+  </div>
+
+  <div class="content" id="stats">
+    <h2>📊 Статистика</h2>
+    <p>Здесь будет отображаться активность участников и движение токена $CLR.</p>
+    <div class="back" onclick="goBack()">← Назад</div>
+  </div>
+
+  <script>
+    function openSection(id) {
+      document.getElementById('menu').style.display = 'none';
+      document.querySelectorAll('.content').forEach(el => el.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function goBack() {
+      document.querySelectorAll('.content').forEach(el => el.style.display = 'none');
+      document.getElementById('menu').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
