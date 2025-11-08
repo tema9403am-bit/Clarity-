@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clarity Chain</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- NEAR Wallet Selector SDK -->
+  <script src="https://unpkg.com/@near-wallet-selector/core@latest"></script>
+  <script src="https://unpkg.com/@near-wallet-selector/modal-ui@latest"></script>
+  <script src="https://unpkg.com/@near-wallet-selector/near-wallet@latest"></script>
+
   <style>
     body {
       margin: 0;
@@ -135,7 +141,6 @@
       stats.classList.remove('hidden');
     });
 
-    // Возврат в меню
     document.getElementById('backToMenu').addEventListener('click', () => {
       experiment.classList.add('hidden');
       menu.classList.remove('hidden');
@@ -151,17 +156,41 @@
       menu.classList.remove('hidden');
     });
 
-    // Подключение кошелька (эмуляция)
-    document.getElementById('connectWalletBtn').addEventListener('click', () => {
-      const wallet = document.getElementById('walletInput').value.trim();
-      if (!wallet) {
-        alert('Введите адрес кошелька!');
-        return;
-      }
-      alert('Кошелёк ' + wallet + ' успешно подключен!');
-      experiment.classList.add('hidden');
-      menu.classList.remove('hidden');
-    });
+    // ======== Подключение к NEAR TESTNET (реальное) ========
+    async function initNear() {
+      const { setupWalletSelector } = window.nearWalletSelector;
+      const { setupModal } = window.nearWalletSelectorModalUI;
+      const { setupNearWallet } = window.nearWalletSelectorNearWallet;
+
+      // Инициализация селектора
+      const selector = await setupWalletSelector({
+        network: "testnet",
+        modules: [setupNearWallet()],
+      });
+
+      // Инициализация модального окна выбора кошелька
+      const modal = setupModal(selector, {
+        contractId: "claritychain.testnet", // можно заменить на свой контракт
+        description: "Подключись к Clarity Chain Testnet",
+      });
+
+      // Кнопка "Подключить"
+      document.getElementById('connectWalletBtn').addEventListener('click', () => {
+        modal.show();
+      });
+
+      // Отслеживаем изменение состояния (когда кошелёк подключен)
+      selector.store.observable.subscribe((state) => {
+        const account = state.accounts.find((acc) => acc.active);
+        if (account) {
+          alert('Кошелёк подключён: ' + account.accountId);
+          experiment.classList.add('hidden');
+          menu.classList.remove('hidden');
+        }
+      });
+    }
+
+    initNear();
   </script>
 </body>
 </html>
