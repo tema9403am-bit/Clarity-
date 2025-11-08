@@ -10,17 +10,52 @@
     h1{color:#00aeef} button{background:#00aeef;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:16px;cursor:pointer;margin-top:20px}
     body {
   margin: 0;
-  padding: 128px 16px 0 16px; /* небольшой фиксированный отступ сверху */
+  padding: 0 16px;
   background-color: #111;
   color: white;
   font-family: Arial, sans-serif;
-  text-align: center;
   height: 100vh;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
+  justify-content: center; /* по центру по вертикали */
+  align-items: center;     /* по центру по горизонтали */
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 26px;
+  margin-bottom: 12px;
+  color: #00A8FF;
+}
+
+p {
+  font-size: 16px;
+  margin-bottom: 24px;
+  opacity: 0.85;
+}
+
+button {
+  background-color: #00A8FF;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #008BD1;
+}
+
+img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin-top: 24px;
+  border: 2px solid #333;
 }
   </style>
 </head>
