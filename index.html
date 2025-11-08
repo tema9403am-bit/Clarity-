@@ -3,147 +3,210 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clarity App</title>
+  <title>Clarity Chain</title>
   <style>
     body {
       margin: 0;
-      font-family: "Inter", system-ui, sans-serif;
-      background: linear-gradient(180deg, #0f2027, #203a43, #2c5364);
-      color: white;
-      height: 100vh;
+      padding: 0;
+      background-color: #0d0d0d;
+      color: #f0f0f0;
+      font-family: "Inter", sans-serif;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
+      height: 100vh;
+      overflow: hidden;
     }
-    h1 {
-      font-size: 28px;
-      margin-bottom: 40px;
-      text-shadow: 0 0 10px rgba(255,255,255,0.4);
-    }
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      width: 80%;
-      max-width: 320px;
-    }
-    button {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 14px;
-      color: white;
-      font-size: 18px;
-      padding: 16px;
-      width: 100%;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      backdrop-filter: blur(6px);
-    }
-    button:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: translateY(-2px);
-    }
-    .content {
-      display: none;
+
+    #start-screen, #main-menu, #experiment-screen {
       text-align: center;
-      width: 80%;
+      display: none;
+      width: 100%;
       max-width: 400px;
     }
-    .back {
-      margin-top: 40px;
-      color: #aaa;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .wallet-box {
-      background: rgba(255,255,255,0.08);
-      padding: 16px;
-      border-radius: 14px;
+
+    h1, h2 {
       margin-bottom: 20px;
     }
-    .wallet-address {
-      color: #7cffb2;
-      font-weight: bold;
-      margin-top: 10px;
-      font-size: 14px;
+
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 12px 22px;
+      font-size: 16px;
+      background: #1a1a1a;
+      color: #f0f0f0;
+      border: 1px solid #555;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .success {
-      margin-top: 10px;
-      color: #7cffb2;
-      font-weight: bold;
+
+    button:hover {
+      background: #333;
     }
+
+    #wallet-status, #payment-form {
+      margin-top: 15px;
+      font-size: 15px;
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+      width: 80%;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .hidden { display: none; }
   </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/near-api-js/dist/near-api-js.min.js"></script>
 </head>
 <body>
-  <h1>Clarity</h1>
-
-  <div class="menu" id="menu">
-    <button onclick="openSection('about')">🌀 Где я?</button>
-    <button onclick="openSection('experiment')">🧬 Участвовать в эксперименте</button>
-    <button onclick="openSection('stats')">📊 Статистика</button>
+  <!-- Стартовый экран -->
+  <div id="start-screen">
+    <h1>Clarity Chain</h1>
+    <p>Погрузись в эксперимент прозрачной экономики</p>
+    <button id="start-btn">Начать</button>
   </div>
 
-  <div class="content" id="about">
-    <h2>🌀 Где я?</h2>
-    <p>Ты находишься в экосистеме Clarity — месте, где прозрачность и участие формируют новую экономику доверия.</p>
-    <div class="back" onclick="goBack()">← Назад</div>
+  <!-- Главное меню -->
+  <div id="main-menu" class="hidden">
+    <h2>Главное меню</h2>
+    <button id="where-btn">Где я?</button>
+    <button id="participate-btn">Участвовать в эксперименте</button>
+    <button id="stats-btn">Статистика</button>
   </div>
 
-  <div class="content" id="experiment">
-    <h2>🧬 Участвовать в эксперименте</h2>
-    <p>Подключи NEAR-кошелёк, чтобы войти в экспериментальную фазу Clarity.</p>
+  <!-- Экран участия -->
+  <div id="experiment-screen" class="hidden">
+    <h2>Участвовать в эксперименте</h2>
+    <p>Подключи свой NEAR-кошелек, чтобы принять участие.</p>
+    <button id="connect-wallet-btn">Подключить кошелек</button>
+    <div id="wallet-status"></div>
 
-    <div class="wallet-box" id="walletBox">
-      <button id="connectWalletBtn">🔗 Подключить кошелёк NEAR</button>
-      <div class="wallet-address" id="walletAddress" style="display:none;"></div>
+    <div id="payment-form" class="hidden">
+      <p>Введите сумму для участия (в NEAR):</p>
+      <input type="number" id="amount" placeholder="0.1" step="0.01" min="0.01" />
+      <button id="send-payment-btn">Отправить оплату</button>
+      <div id="payment-status"></div>
     </div>
 
-    <button id="confirmParticipation" style="display:none;">🚀 Подтвердить участие</button>
-    <div id="participationSuccess" class="success" style="display:none;">✅ Участие подтверждено!</div>
-
-    <div class="back" onclick="goBack()">← Назад</div>
-  </div>
-
-  <div class="content" id="stats">
-    <h2>📊 Статистика</h2>
-    <p>Здесь будет отображаться активность участников и движение токена $CLR.</p>
-    <div class="back" onclick="goBack()">← Назад</div>
+    <button id="back-btn">Назад</button>
   </div>
 
   <script>
-    function openSection(id) {
-      document.getElementById('menu').style.display = 'none';
-      document.querySelectorAll('.content').forEach(el => el.style.display = 'none');
-      document.getElementById(id).style.display = 'block';
+    const { connect, keyStores, WalletConnection, utils } = window.nearApi;
+
+    const nearConfig = {
+      networkId: "testnet",
+      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+      nodeUrl: "https://rpc.testnet.near.org",
+      walletUrl: "https://wallet.testnet.near.org",
+      helperUrl: "https://helper.testnet.near.org",
+      explorerUrl: "https://explorer.testnet.near.org"
+    };
+
+    let wallet, account;
+
+    async function initNear() {
+      const near = await connect(nearConfig);
+      wallet = new WalletConnection(near);
+      if (wallet.isSignedIn()) {
+        account = wallet.account();
+      }
+      updateWalletUI();
     }
-    function goBack() {
-      document.querySelectorAll('.content').forEach(el => el.style.display = 'none');
-      document.getElementById('menu').style.display = 'flex';
+
+    function updateWalletUI() {
+      const walletStatus = document.getElementById("wallet-status");
+      const connectBtn = document.getElementById("connect-wallet-btn");
+      const paymentForm = document.getElementById("payment-form");
+
+      if (wallet.isSignedIn()) {
+        const accountId = wallet.getAccountId();
+        walletStatus.innerHTML = `✅ Подключено: <b>${accountId}</b>`;
+        connectBtn.textContent = "Отключить кошелек";
+        paymentForm.classList.remove("hidden");
+      } else {
+        walletStatus.innerHTML = "❌ Кошелек не подключен";
+        connectBtn.textContent = "Подключить кошелек";
+        paymentForm.classList.add("hidden");
+      }
+
+      connectBtn.onclick = () => {
+        if (wallet.isSignedIn()) {
+          wallet.signOut();
+          window.location.reload();
+        } else {
+          wallet.requestSignIn(); // можно указать контракт позже
+        }
+      };
     }
 
-    // Симуляция подключения NEAR-кошелька
-    const connectBtn = document.getElementById('connectWalletBtn');
-    const walletAddress = document.getElementById('walletAddress');
-    const confirmBtn = document.getElementById('confirmParticipation');
-    const success = document.getElementById('participationSuccess');
+    async function sendPayment() {
+      const amountInput = document.getElementById("amount");
+      const paymentStatus = document.getElementById("payment-status");
 
-    connectBtn.addEventListener('click', () => {
-      const fakeAddress = "clarity.near";
-      connectBtn.style.display = 'none';
-      walletAddress.style.display = 'block';
-      walletAddress.textContent = `Подключён: ${fakeAddress}`;
-      confirmBtn.style.display = 'block';
-    });
+      const amount = parseFloat(amountInput.value);
+      if (!amount || amount <= 0) {
+        paymentStatus.textContent = "Введите корректную сумму.";
+        return;
+      }
 
-    confirmBtn.addEventListener('click', () => {
-      confirmBtn.style.display = 'none';
-      success.style.display = 'block';
-      setTimeout(() => {
-        success.style.display = 'none';
-        goBack();
-      }, 2000);
-    });
+      const yoctoAmount = utils.format.parseNearAmount(amount.toString());
+      const receiver = "claritychain.testnet"; // можно изменить на свой кошелёк
+
+      try {
+        paymentStatus.textContent = "Отправка транзакции...";
+        await wallet.account().sendMoney(receiver, yoctoAmount);
+        paymentStatus.innerHTML = `✅ Успешно отправлено ${amount} NEAR → ${receiver}`;
+      } catch (error) {
+        console.error(error);
+        paymentStatus.textContent = "Ошибка при оплате. Проверьте кошелек.";
+      }
+    }
+
+    // Навигация
+    window.onload = async () => {
+      await initNear();
+
+      const startScreen = document.getElementById("start-screen");
+      const mainMenu = document.getElementById("main-menu");
+      const experimentScreen = document.getElementById("experiment-screen");
+
+      startScreen.style.display = "block";
+
+      document.getElementById("start-btn").addEventListener("click", () => {
+        startScreen.classList.add("hidden");
+        mainMenu.classList.remove("hidden");
+      });
+
+      document.getElementById("participate-btn").addEventListener("click", () => {
+        mainMenu.classList.add("hidden");
+        experimentScreen.classList.remove("hidden");
+      });
+
+      document.getElementById("back-btn").addEventListener("click", () => {
+        experimentScreen.classList.add("hidden");
+        mainMenu.classList.remove("hidden");
+      });
+
+      document.getElementById("where-btn").addEventListener("click", () => {
+        alert("Ты находишься в мире Clarity Chain — эксперименте прозрачной экономики.");
+      });
+
+      document.getElementById("stats-btn").addEventListener("click", () => {
+        alert("Раздел статистики в разработке.");
+      });
+
+      document.getElementById("send-payment-btn").addEventListener("click", sendPayment);
+    };
   </script>
 </body>
 </html>
