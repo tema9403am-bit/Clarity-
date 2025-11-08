@@ -62,6 +62,29 @@
       cursor: pointer;
       text-decoration: underline;
     }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      text-align: center;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .success {
+      margin-top: 10px;
+      color: #7cffb2;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -69,7 +92,7 @@
 
   <div class="menu" id="menu">
     <button onclick="openSection('about')">🌀 Где я?</button>
-    <button onclick="openSection('presale')">🚀 Пресейл</button>
+    <button onclick="openSection('experiment')">🧬 Участвовать в эксперименте</button>
     <button onclick="openSection('stats')">📊 Статистика</button>
   </div>
 
@@ -79,9 +102,15 @@
     <div class="back" onclick="goBack()">← Назад</div>
   </div>
 
-  <div class="content" id="presale">
-    <h2>🚀 Пресейл</h2>
-    <p>Здесь скоро появится окно раннего участия. Следи за обновлениями!</p>
+  <div class="content" id="experiment">
+    <h2>🧬 Участвовать в эксперименте</h2>
+    <p>Заполни форму, чтобы присоединиться к пилотной фазе проекта Clarity.</p>
+    <form id="joinForm">
+      <input type="text" id="name" placeholder="Имя или никнейм" required />
+      <input type="text" id="wallet" placeholder="Кошелёк (NEAR / TON / ETH)" required />
+      <button type="submit">Отправить заявку</button>
+    </form>
+    <div id="successMessage" class="success" style="display: none;">✅ Заявка отправлена!</div>
     <div class="back" onclick="goBack()">← Назад</div>
   </div>
 
@@ -102,6 +131,17 @@
       document.querySelectorAll('.content').forEach(el => el.style.display = 'none');
       document.getElementById('menu').style.display = 'flex';
     }
+
+    // Заглушка обработки формы
+    document.getElementById('joinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('successMessage').style.display = 'block';
+      setTimeout(() => {
+        goBack();
+        document.getElementById('successMessage').style.display = 'none';
+        e.target.reset();
+      }, 2000);
+    });
   </script>
 </body>
 </html>
