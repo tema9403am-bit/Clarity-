@@ -18,6 +18,10 @@
       overflow: hidden;
     }
 
+    #loader {
+      text-align: center;
+    }
+
     #start-screen, #main-menu, #experiment-screen {
       text-align: center;
       display: none;
@@ -65,11 +69,16 @@
     .hidden { display: none; }
   </style>
 
-  <script src="https://cdn.jsdelivr.net/npm/near-api-js/dist/near-api-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/near-api-js@1.1.0/dist/near-api-js.min.js"></script>
 </head>
 <body>
+  <!-- Загрузчик -->
+  <div id="loader">
+    <h2>Загрузка Clarity Chain...</h2>
+  </div>
+
   <!-- Стартовый экран -->
-  <div id="start-screen">
+  <div id="start-screen" class="hidden">
     <h1>Clarity Chain</h1>
     <p>Погрузись в эксперимент прозрачной экономики</p>
     <button id="start-btn">Начать</button>
@@ -101,87 +110,91 @@
   </div>
 
   <script>
-    const { connect, keyStores, WalletConnection, utils } = window.nearApi;
-
-    const nearConfig = {
-      networkId: "testnet",
-      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-      nodeUrl: "https://rpc.testnet.near.org",
-      walletUrl: "https://wallet.testnet.near.org",
-      helperUrl: "https://helper.testnet.near.org",
-      explorerUrl: "https://explorer.testnet.near.org"
-    };
-
-    let wallet, account;
-
-    async function initNear() {
-      const near = await connect(nearConfig);
-      wallet = new WalletConnection(near);
-      if (wallet.isSignedIn()) {
-        account = wallet.account();
-      }
-      updateWalletUI();
-    }
-
-    function updateWalletUI() {
-      const walletStatus = document.getElementById("wallet-status");
-      const connectBtn = document.getElementById("connect-wallet-btn");
-      const paymentForm = document.getElementById("payment-form");
-
-      if (wallet.isSignedIn()) {
-        const accountId = wallet.getAccountId();
-        walletStatus.innerHTML = `✅ Подключено: <b>${accountId}</b>`;
-        connectBtn.textContent = "Отключить кошелек";
-        paymentForm.classList.remove("hidden");
-      } else {
-        walletStatus.innerHTML = "❌ Кошелек не подключен";
-        connectBtn.textContent = "Подключить кошелек";
-        paymentForm.classList.add("hidden");
-      }
-
-      connectBtn.onclick = () => {
-        if (wallet.isSignedIn()) {
-          wallet.signOut();
-          window.location.reload();
-        } else {
-          wallet.requestSignIn(); // можно указать контракт позже
-        }
-      };
-    }
-
-    async function sendPayment() {
-      const amountInput = document.getElementById("amount");
-      const paymentStatus = document.getElementById("payment-status");
-
-      const amount = parseFloat(amountInput.value);
-      if (!amount || amount <= 0) {
-        paymentStatus.textContent = "Введите корректную сумму.";
-        return;
-      }
-
-      const yoctoAmount = utils.format.parseNearAmount(amount.toString());
-      const receiver = "claritychain.testnet"; // можно изменить на свой кошелёк
-
-      try {
-        paymentStatus.textContent = "Отправка транзакции...";
-        await wallet.account().sendMoney(receiver, yoctoAmount);
-        paymentStatus.innerHTML = `✅ Успешно отправлено ${amount} NEAR → ${receiver}`;
-      } catch (error) {
-        console.error(error);
-        paymentStatus.textContent = "Ошибка при оплате. Проверьте кошелек.";
-      }
-    }
-
-    // Навигация
     window.onload = async () => {
-      await initNear();
-
+      const loader = document.getElementById("loader");
       const startScreen = document.getElementById("start-screen");
       const mainMenu = document.getElementById("main-menu");
       const experimentScreen = document.getElementById("experiment-screen");
 
-      startScreen.style.display = "block";
+      loader.style.display = "block";
 
+      // Проверяем, что библиотека NEAR загружена
+      if (!window.nearApi) {
+        loader.innerHTML = "<h2>Ошибка загрузки NEAR API. Попробуй обновить страницу.</h2>";
+        return;
+      }
+
+      const { connect, keyStores, WalletConnection, utils } = window.nearApi;
+      const nearConfig = {
+        networkId: "testnet",
+        keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+        nodeUrl: "https://rpc.testnet.near.org",
+        walletUrl: "https://wallet.testnet.near.org",
+        helperUrl: "https://helper.testnet.near.org",
+        explorerUrl: "https://explorer.testnet.near.org"
+      };
+
+      let wallet, account;
+
+      async function initNear() {
+        const near = await connect(nearConfig);
+        wallet = new WalletConnection(near);
+        if (wallet.isSignedIn()) {
+          account = wallet.account();
+        }
+        updateWalletUI();
+      }
+
+      function updateWalletUI() {
+        const walletStatus = document.getElementById("wallet-status");
+        const connectBtn = document.getElementById("connect-wallet-btn");
+        const paymentForm = document.getElementById("payment-form");
+
+        if (wallet.isSignedIn()) {
+          const accountId = wallet.getAccountId();
+          walletStatus.innerHTML = `✅ Подключено: <b>${accountId}</b>`;
+          connectBtn.textContent = "Отключить кошелек";
+          paymentForm.classList.remove("hidden");
+        } else {
+          walletStatus.innerHTML = "❌ Кошелек не подключен";
+          connectBtn.textContent = "Подключить кошелек";
+          paymentForm.classList.add("hidden");
+        }
+
+        connectBtn.onclick = () => {
+          if (wallet.isSignedIn()) {
+            wallet.signOut();
+            window.location.reload();
+          } else {
+            wallet.requestSignIn();
+          }
+        };
+      }
+
+      async function sendPayment() {
+        const amountInput = document.getElementById("amount");
+        const paymentStatus = document.getElementById("payment-status");
+
+        const amount = parseFloat(amountInput.value);
+        if (!amount || amount <= 0) {
+          paymentStatus.textContent = "Введите корректную сумму.";
+          return;
+        }
+
+        const yoctoAmount = utils.format.parseNearAmount(amount.toString());
+        const receiver = "claritychain.testnet";
+
+        try {
+          paymentStatus.textContent = "Отправка транзакции...";
+          await wallet.account().sendMoney(receiver, yoctoAmount);
+          paymentStatus.innerHTML = `✅ Успешно отправлено ${amount} NEAR → ${receiver}`;
+        } catch (error) {
+          console.error(error);
+          paymentStatus.textContent = "Ошибка при оплате. Проверьте кошелек.";
+        }
+      }
+
+      // Навигация
       document.getElementById("start-btn").addEventListener("click", () => {
         startScreen.classList.add("hidden");
         mainMenu.classList.remove("hidden");
@@ -206,6 +219,10 @@
       });
 
       document.getElementById("send-payment-btn").addEventListener("click", sendPayment);
+
+      await initNear();
+      loader.style.display = "none";
+      startScreen.classList.remove("hidden");
     };
   </script>
 </body>
