@@ -35,12 +35,7 @@
   </style>
 </head>
 <body>
-  <div id="start-screen" class="screen active">
-    <h1>Добро пожаловать!</h1>
-    <button id="startBtn">Начать</button>
-  </div>
-
-  <div id="menu" class="screen">
+  <div id="menu" class="screen active">
     <h2>Главное меню</h2>
     <button id="experimentBtn">Эксперимент</button>
     <button id="whereBtn">Где я?</button>
@@ -81,22 +76,17 @@
       setupHereWallet,
     } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/here-wallet@8.6.1/dist/near-wallet-selector-here-wallet.esm.js";
 
-    const startScreen = document.getElementById("start-screen");
     const menu = document.getElementById("menu");
     const experiment = document.getElementById("experiment");
     const where = document.getElementById("where");
     const stats = document.getElementById("stats");
     const walletInfo = document.getElementById("walletInfo");
 
-    // Управление экранами
     function showScreen(screen) {
-      [startScreen, menu, experiment, where, stats].forEach(s =>
-        s.classList.remove("active")
-      );
+      [menu, experiment, where, stats].forEach(s => s.classList.remove("active"));
       screen.classList.add("active");
     }
 
-    document.getElementById("startBtn").onclick = () => showScreen(menu);
     document.getElementById("experimentBtn").onclick = () => showScreen(experiment);
     document.getElementById("whereBtn").onclick = () => showScreen(where);
     document.getElementById("statsBtn").onclick = () => showScreen(stats);
@@ -104,7 +94,7 @@
     document.getElementById("backFromWhere").onclick = () => showScreen(menu);
     document.getElementById("backFromStats").onclick = () => showScreen(menu);
 
-    // Инициализация Wallet Selector
+    // Wallet Selector
     async function initWalletSelector() {
       try {
         const selector = await setupWalletSelector({
@@ -118,7 +108,6 @@
           modal.show();
         };
 
-        // Проверяем подключён ли кошелёк
         const state = selector.store.getState();
         if (state.accounts.length > 0) {
           const accountId = state.accounts[0].accountId;
