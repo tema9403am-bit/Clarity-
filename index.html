@@ -1,211 +1,147 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clarity Chain — miniapp</title>
-
-  <!-- ✅ Исправленное подключение near-api-js -->
-  <script src="https://cdn.jsdelivr.net/npm/near-api-js@2.1.4/dist/near-api-js.min.js"></script>
-<title>Clarity Chain — miniapp</title>
-
-<!-- near-api-js (CDN) -->
-<script src="https://unpkg.com/near-api-js/dist/near-api-js.min.js"></script>
-
-<style>
-  :root{--bg:#000;--muted:#bbb;--accent:#00aaff}
-  html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial}
-  .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
-  h1{color:var(--accent);font-size:28px;margin:0 0 8px}
-  p.sub{color:var(--muted);margin:6px 0 24px}
-  .menu, .screen{display:none;width:100%;max-width:480px}
-  .visible{display:block}
-  button{background:var(--accent);border:none;padding:12px 24px;border-radius:8px;color:#fff;font-size:16px;cursor:pointer}
-  button.ghost{background:transparent;border:1px solid #333;color:var(--muted)}
-  .wallet-form{display:flex;flex-direction:column;align-items:center;gap:12px}
-  input.text{padding:10px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;width:260px}
-  .info{margin-top:14px;color:var(--muted);font-size:14px}
-  .small{font-size:13px;color:#999;margin-top:8px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEAR MiniApp</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .screen {
+      display: none;
+      padding: 40px;
+    }
+    .active {
+      display: block;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #0084ff;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #006fe6;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- старт -->
-    <div id="start" class="screen visible">
-      <h1>Clarity Chain</h1>
-      <p class="sub">Погрузись в эксперимент прозрачной экономики</p>
-      <button id="btnStart">Начать</button>
-    </div>
-
-    <!-- меню -->
-    <div id="menu" class="menu">
-      <h1>Главное меню</h1>
-      <div style="margin:20px 0;">
-        <button id="btnWhere" style="display:inline-block;margin:8px">Где я?</button>
-        <button id="btnExperiment" style="display:inline-block;margin:8px">Участвовать в эксперименте</button>
-        <button id="btnStats" style="display:inline-block;margin:8px">Статистика</button>
-      </div>
-    </div>
-
-    <!-- Экран эксперимента -->
-    <div id="experiment" class="screen">
-      <h1>Подключи NEAR кошелёк</h1>
-      <div class="wallet-form">
-        <input id="manualWallet" class="text" placeholder="(опционально) введи адрес кошелька NEAR" />
-        <button id="btnConnect">Подключить NEAR (Testnet)</button>
-        <div id="walletState" class="info"></div>
-        <div id="actions" class="small"></div>
-      </div>
-      <div style="margin-top:20px"><button id="btnBack" class="ghost">Назад</button></div>
-    </div>
-
-    <!-- Где я -->
-    <div id="where" class="screen">
-      <h1>Ты находишься внутри экосистемы Clarity Chain</h1>
-      <p class="sub">Платформа прозрачной экономики и открытых экспериментов.</p>
-      <button id="backFromWhere" class="ghost">Назад</button>
-    </div>
-
-    <!-- Статистика -->
-    <div id="stats" class="screen">
-      <h1>Статистика</h1>
-      <p class="sub">Данные появятся после первых транзакций и подключений.</p>
-      <button id="backFromStats" class="ghost">Назад</button>
-    </div>
-
-    <div id="debug" class="small" style="margin-top:18px;color:#666"></div>
+  <div id="start-screen" class="screen active">
+    <h1>Добро пожаловать!</h1>
+    <button id="startBtn">Начать</button>
   </div>
 
-<script>
-(async function(){
-  // UI элементы
-  const start = document.getElementById('start');
-  const menu = document.getElementById('menu');
-  const experiment = document.getElementById('experiment');
-  const where = document.getElementById('where');
-  const stats = document.getElementById('stats');
-  const debug = document.getElementById('debug');
+  <div id="menu" class="screen">
+    <h2>Главное меню</h2>
+    <button id="experimentBtn">Эксперимент</button>
+    <button id="whereBtn">Где я?</button>
+    <button id="statsBtn">Статистика</button>
+    <button id="connectWalletBtn">Подключить кошелёк</button>
+    <p id="walletInfo"></p>
+  </div>
 
-  // навигация
-  document.getElementById('btnStart').onclick = ()=>{ start.classList.remove('visible'); start.classList.add('screen'); menu.classList.add('visible'); }
-  document.getElementById('btnWhere').onclick = ()=>{ menu.classList.remove('visible'); where.classList.add('visible'); }
-  document.getElementById('backFromWhere').onclick = ()=>{ where.classList.remove('visible'); menu.classList.add('visible'); }
-  document.getElementById('btnStats').onclick = ()=>{ menu.classList.remove('visible'); stats.classList.add('visible'); }
-  document.getElementById('backFromStats').onclick = ()=>{ stats.classList.remove('visible'); menu.classList.add('visible'); }
-  document.getElementById('btnExperiment').onclick = ()=>{ menu.classList.remove('visible'); experiment.classList.add('visible'); }
-  document.getElementById('btnBack').onclick = ()=>{ experiment.classList.remove('visible'); menu.classList.add('visible'); }
+  <div id="experiment" class="screen">
+    <h2>Эксперимент</h2>
+    <p>Здесь будут ваши эксперименты с Web3 и NEAR.</p>
+    <button id="backToMenu">Назад</button>
+  </div>
 
-  // === NEAR init (testnet) ===
-  // Используем near-api-js из CDN (подключён в <head>)
-  const nearApi = window.nearApi;
-  if(!nearApi){
-    debug.textContent = 'Ошибка: near-api-js не загружен';
-    return;
-  }
+  <div id="where" class="screen">
+    <h2>Где я?</h2>
+    <p>Вы находитесь в тестовой NEAR MiniApp!</p>
+    <button id="backFromWhere">Назад</button>
+  </div>
 
-  const { connect, WalletConnection, keyStores, utils } = nearApi;
-  const nearConfig = {
-    networkId: "testnet",
-    keyStore: new keyStores.BrowserLocalStorageKeyStore(), // хранит ключи в localStorage
-    nodeUrl: "https://rpc.testnet.near.org",
-    walletUrl: "https://wallet.testnet.near.org",
-    helperUrl: "https://helper.testnet.near.org",
-    explorerUrl: "https://explorer.testnet.near.org"
-  };
+  <div id="stats" class="screen">
+    <h2>Статистика</h2>
+    <p>Скоро тут появятся данные с блокчейна.</p>
+    <button id="backFromStats">Назад</button>
+  </div>
 
-  let walletConnection = null;
-  let accountId = '';
+  <script type="module">
+    import {
+      setupWalletSelector,
+    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/core@8.6.1/dist/near-wallet-selector-core.esm.js";
+    import {
+      setupModal,
+    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui@8.6.1/dist/near-wallet-selector-modal-ui.esm.js";
+    import {
+      setupNearWallet,
+    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/near-wallet@8.6.1/dist/near-wallet-selector-near-wallet.esm.js";
+    import {
+      setupHereWallet,
+    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/here-wallet@8.6.1/dist/near-wallet-selector-here-wallet.esm.js";
 
-  async function initNear(){
-    try{
-      const near = await connect(nearConfig);
-      walletConnection = new WalletConnection(near, 'clarity-chain-demo');
-      if(walletConnection.isSignedIn()){
-        accountId = walletConnection.getAccountId();
-        showWalletState();
-      } else {
-        showWalletState();
+    const startScreen = document.getElementById("start-screen");
+    const menu = document.getElementById("menu");
+    const experiment = document.getElementById("experiment");
+    const where = document.getElementById("where");
+    const stats = document.getElementById("stats");
+    const walletInfo = document.getElementById("walletInfo");
+
+    // Управление экранами
+    function showScreen(screen) {
+      [startScreen, menu, experiment, where, stats].forEach(s =>
+        s.classList.remove("active")
+      );
+      screen.classList.add("active");
+    }
+
+    document.getElementById("startBtn").onclick = () => showScreen(menu);
+    document.getElementById("experimentBtn").onclick = () => showScreen(experiment);
+    document.getElementById("whereBtn").onclick = () => showScreen(where);
+    document.getElementById("statsBtn").onclick = () => showScreen(stats);
+    document.getElementById("backToMenu").onclick = () => showScreen(menu);
+    document.getElementById("backFromWhere").onclick = () => showScreen(menu);
+    document.getElementById("backFromStats").onclick = () => showScreen(menu);
+
+    // Инициализация Wallet Selector
+    async function initWalletSelector() {
+      try {
+        const selector = await setupWalletSelector({
+          network: "testnet",
+          modules: [setupNearWallet(), setupHereWallet()],
+        });
+
+        const modal = setupModal(selector, { contractId: "example.testnet" });
+
+        document.getElementById("connectWalletBtn").onclick = async () => {
+          modal.show();
+        };
+
+        // Проверяем подключён ли кошелёк
+        const state = selector.store.getState();
+        if (state.accounts.length > 0) {
+          const accountId = state.accounts[0].accountId;
+          walletInfo.textContent = `Подключён: ${accountId}`;
+        }
+
+        selector.store.observable.subscribe(async (nextState) => {
+          if (nextState.accounts.length > 0) {
+            const accountId = nextState.accounts[0].accountId;
+            walletInfo.textContent = `Подключён: ${accountId}`;
+          } else {
+            walletInfo.textContent = "";
+          }
+        });
+
+        console.log("✅ Wallet Selector готов");
+      } catch (err) {
+        console.error("Ошибка Wallet Selector:", err);
+        alert("Не удалось инициализировать Wallet Selector");
       }
-      debug.textContent = 'NEAR init ok (testnet)';
-    }catch(err){
-      debug.textContent = 'NEAR init error: ' + (err && err.message ? err.message : String(err));
-      console.error(err);
     }
-  }
 
-  function showWalletState(){
-    const stateDiv = document.getElementById('walletState');
-    const actionsDiv = document.getElementById('actions');
-    if(walletConnection && walletConnection.isSignedIn()){
-      accountId = walletConnection.getAccountId();
-      stateDiv.innerHTML = `✅ Подключено: <b>${accountId}</b>`;
-      actionsDiv.innerHTML = `
-        <button id="btnSend" style="margin-top:10px">Отправить 0.001 NEAR (тест)</button>
-        <button id="btnSignOut" class="ghost" style="margin-left:8px">Отключить</button>
-      `;
-      // назначаем обработчики для динамических кнопок
-      setTimeout(()=>{ // setTimeout чтобы элемент успел появиться в DOM
-        const bSend = document.getElementById('btnSend');
-        const bOut = document.getElementById('btnSignOut');
-        if(bSend) bSend.onclick = sendTest;
-        if(bOut) bOut.onclick = ()=>{ walletConnection.signOut(); accountId=''; showWalletState(); };
-      },50);
-    } else {
-      const manual = document.getElementById('manualWallet').value.trim();
-      stateDiv.innerHTML = manual ? `Адрес (ручной): <b>${manual}</b>` : 'Кошелёк не подключён';
-      actionsDiv.innerHTML = `<div class="small">Нажми «Подключить», чтобы открыть NEAR Wallet и авторизоваться (testnet).</div>`;
-    }
-  }
-
-  // кнопка подключить: перенаправление на wallet.testnet.near.org для авторизации
-  document.getElementById('btnConnect').onclick = async function(){
-    // если уже подключён — ничего
-    if(walletConnection && walletConnection.isSignedIn()){
-      alert('Вы уже подключены: ' + walletConnection.getAccountId());
-      return;
-    }
-    // Запрашиваем авторизацию. requestSignIn перенаправит на кошелёк.
-    try {
-      // contractId можно оставить пустым (для простой авторизации)
-      await walletConnection.requestSignIn({
-        contractId: '', // если у тебя контракт, можно указать
-        successUrl: window.location.href,
-        failureUrl: window.location.href
-      });
-      // requestSignIn делает redirect и дальше код не выполняется в этом сеансе.
-    } catch(e){
-      console.error('requestSignIn error', e);
-      alert('Ошибка открытия кошелька: ' + (e.message||e));
-    }
-  };
-
-  // отправка маленькой тестовой суммы (0.001 NEAR)
-  async function sendTest(){
-    try{
-      if(!walletConnection || !walletConnection.isSignedIn()){
-        alert('Сначала подключите кошелёк');
-        return;
-      }
-      const to = walletConnection.getAccountId(); // отправим самому себе для теста
-      const amountNear = '0.001';
-      const amountYocto = utils.format.parseNearAmount(amountNear);
-      const response = await walletConnection.account().sendMoney(to, amountYocto);
-      console.log('tx resp', response);
-      alert('Транзакция отправлена (проверь explorer.testnet.near.org по хэшу в консоли)');
-    }catch(err){
-      console.error('send error', err);
-      alert('Ошибка при отправке: ' + (err.message||err));
-    }
-  }
-
-  // После загрузки пытаемся инициализировать NEAR и сразу показать состояние
-  await initNear();
-  showWalletState();
-
-  // Если пользователь вернулся после авторизации (redirect), WalletConnection уже покажет isSignedIn true
-  // поэтому просто заново показываем состояние (initNear сделал это)
-})();
-</script>
+    initWalletSelector();
+  </script>
 </body>
 </html>
