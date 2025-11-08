@@ -1,136 +1,155 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEAR MiniApp</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 0;
-    }
-    .screen {
-      display: none;
-      padding: 40px;
-    }
-    .active {
-      display: block;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      background-color: #0084ff;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 10px;
-    }
-    button:hover {
-      background-color: #006fe6;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clarity Chain — miniapp</title>
+
+<style>
+  /* Простой, читаемый стиль — не трогаем дизайн Telegram */
+  body{margin:0;background:#000;color:#fff;font-family:Inter,Arial;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .container{width:100%;max-width:720px;padding:18px;box-sizing:border-box;text-align:center}
+  h1{color:#00aaff;margin:8px 0 18px;font-size:30px}
+  p{color:#cfcfcf;margin:8px 0 20px}
+  .hidden{display:none}
+  .btn{display:inline-block;padding:12px 24px;margin:10px;border-radius:10px;background:#00aaff;color:#000;font-weight:600;border:none;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid #333;color:#cfcfcf}
+  .menu .btn{display:block;width:80%;margin:10px auto}
+  input[type="text"]{padding:12px;width:80%;max-width:420px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;margin:10px 0}
+  .small{font-size:13px;color:#bbb;margin-top:10px}
+</style>
 </head>
 <body>
-  <div id="menu" class="screen active">
-    <h2>Главное меню</h2>
-    <button id="experimentBtn">Эксперимент</button>
-    <button id="whereBtn">Где я?</button>
-    <button id="statsBtn">Статистика</button>
-    <button id="connectWalletBtn">Подключить кошелёк</button>
-    <p id="walletInfo"></p>
+  <div class="container">
+
+    <!-- СТАРТОВЫЙ ЭКРАН -->
+    <div id="startScreen">
+      <h1>Clarity Chain</h1>
+      <p>Погрузись в эксперимент прозрачной экономики</p>
+      <button id="startBtn" class="btn">Начать</button>
+    </div>
+
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <div id="mainMenu" class="hidden">
+      <h1>Главное меню</h1>
+      <div class="menu">
+        <button id="whereBtn" class="btn">Где я?</button>
+        <button id="experimentBtn" class="btn">Участвовать в эксперименте</button>
+        <button id="statsBtn" class="btn">Статистика</button>
+      </div>
+      <div class="small">Версия: пилот</div>
+    </div>
+
+    <!-- ЭКРАН УЧАСТИЯ -->
+    <div id="experimentScreen" class="hidden">
+      <h1>Подключи NEAR кошелёк</h1>
+
+      <!-- Поле для ручного ввода (оставлено для совместимости/отладки) -->
+      <input id="walletInput" type="text" placeholder="Введи адрес кошелька NEAR (опционально)" />
+
+      <!-- Кнопка: либо откроет модал селектора, либо использует ручной ввод -->
+      <button id="connectBtn" class="btn">Подключить</button>
+
+      <div style="margin-top:14px">
+        <button id="backToMenu" class="btn ghost">Назад</button>
+      </div>
+
+      <div id="walletState" class="small"></div>
+    </div>
+
+    <!-- ЭКРАН "ГДЕ Я?" -->
+    <div id="whereScreen" class="hidden">
+      <h1>Где я?</h1>
+      <p>Ты находишься в тестовой версии проекта Clarity Chain. Здесь мы моделируем прозрачную экономику с NEAR.</p>
+      <button id="backFromWhere" class="btn ghost">Назад</button>
+    </div>
+
+    <!-- ЭКРАН СТАТИСТИКИ -->
+    <div id="statsScreen" class="hidden">
+      <h1>Статистика</h1>
+      <p>Данных нет — это тест. После подключений и транзакций здесь появится информация.</p>
+      <button id="backFromStats" class="btn ghost">Назад</button>
+    </div>
+
   </div>
 
-  <div id="experiment" class="screen">
-    <h2>Эксперимент</h2>
-    <p>Здесь будут ваши эксперименты с Web3 и NEAR.</p>
-    <button id="backToMenu">Назад</button>
-  </div>
+<script>
+/* ========== Простая, надёжная навигация — все кнопки привязаны ========== */
+const startScreen = document.getElementById('startScreen');
+const mainMenu = document.getElementById('mainMenu');
+const experimentScreen = document.getElementById('experimentScreen');
+const whereScreen = document.getElementById('whereScreen');
+const statsScreen = document.getElementById('statsScreen');
+const walletState = document.getElementById('walletState');
 
-  <div id="where" class="screen">
-    <h2>Где я?</h2>
-    <p>Вы находитесь в тестовой NEAR MiniApp!</p>
-    <button id="backFromWhere">Назад</button>
-  </div>
+function show(screen){
+  // прячем все экраны
+  [startScreen, mainMenu, experimentScreen, whereScreen, statsScreen].forEach(s => s.classList.add('hidden'));
+  screen.classList.remove('hidden');
+}
 
-  <div id="stats" class="screen">
-    <h2>Статистика</h2>
-    <p>Скоро тут появятся данные с блокчейна.</p>
-    <button id="backFromStats">Назад</button>
-  </div>
+/* Навигация */
+document.getElementById('startBtn').addEventListener('click', ()=> show(mainMenu));
+document.getElementById('whereBtn').addEventListener('click', ()=> show(whereScreen));
+document.getElementById('experimentBtn').addEventListener('click', ()=> show(experimentScreen));
+document.getElementById('statsBtn').addEventListener('click', ()=> show(statsScreen));
 
-  <script type="module">
-    import {
-      setupWalletSelector,
-    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/core@8.6.1/dist/near-wallet-selector-core.esm.js";
-    import {
-      setupModal,
-    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui@8.6.1/dist/near-wallet-selector-modal-ui.esm.js";
-    import {
-      setupNearWallet,
-    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/near-wallet@8.6.1/dist/near-wallet-selector-near-wallet.esm.js";
-    import {
-      setupHereWallet,
-    } from "https://cdn.jsdelivr.net/npm/@near-wallet-selector/here-wallet@8.6.1/dist/near-wallet-selector-here-wallet.esm.js";
+document.getElementById('backToMenu').addEventListener('click', ()=> show(mainMenu));
+document.getElementById('backFromWhere').addEventListener('click', ()=> show(mainMenu));
+document.getElementById('backFromStats').addEventListener('click', ()=> show(mainMenu));
 
-    const menu = document.getElementById("menu");
-    const experiment = document.getElementById("experiment");
-    const where = document.getElementById("where");
-    const stats = document.getElementById("stats");
-    const walletInfo = document.getElementById("walletInfo");
+/* ========== Логика кнопки Подключить (без ломки структуры) ========== */
+/* Поведение:
+   1) если в поле walletInput введён адрес — считаем, что пользователь подключился вручную (для теста);
+   2) если поле пустое — запускаем заглушку/место для реальной интеграции wallet-selector.
+   Это сохранит структуру и даст тебе стабильную рабочую кнопку.
+*/
+document.getElementById('connectBtn').addEventListener('click', async () => {
+  const manual = document.getElementById('walletInput').value.trim();
+  if(manual){
+    // Быстрая ручная "подключка" — для тестов и назадсовместимости
+    walletState.innerHTML = `✅ Ручной ввод: <b>${escapeHtml(manual)}</b> — считается подключённым (только UI).`;
+    // здесь можно сразу сохранить в localStorage, если нужно
+    localStorage.setItem('clarity_wallet_manual', manual);
+    return;
+  }
 
-    function showScreen(screen) {
-      [menu, experiment, where, stats].forEach(s => s.classList.remove("active"));
-      screen.classList.add("active");
-    }
+  // ====== Здесь место для реального вызова Wallet Selector / WalletConnect / near-api-js ======
+  // Ниже — 2 варианта: (A) — если хочешь быстро использовать Near Wallet через redirect (простая)
+  //                  (B) — если подключён wallet-selector/modal (мы импортируем модуль) — закомментировано.
+  //
+  // A) Простая авторизация через near-api-js WalletConnection (redirect). Работает без сборки,
+  //    но требует, чтобы near-api-js был доступен в WebView (CDN). Если хочешь — я включу.
+  //
+  // B) Более гибкий Wallet Selector / WalletConnect (модальное окно). Это требует модульной загрузки
+  //    (ESM imports) — я могу вставить готовый рабочий блок сюда при твоём подтверждении.
+  //
+  // Пока — делаем простую заглушку, чтобы UI был предсказуем и не ломался:
+  walletState.innerHTML = 'Открой подключение кошелька — (здесь будет модальное окно Wallet Selector).';
+  // Если хочешь — прямо сейчас включу вариант (A) или (B) в эту точку кода.
+});
 
-    document.getElementById("experimentBtn").onclick = () => showScreen(experiment);
-    document.getElementById("whereBtn").onclick = () => showScreen(where);
-    document.getElementById("statsBtn").onclick = () => showScreen(stats);
-    document.getElementById("backToMenu").onclick = () => showScreen(menu);
-    document.getElementById("backFromWhere").onclick = () => showScreen(menu);
-    document.getElementById("backFromStats").onclick = () => showScreen(menu);
+/* Вспомогательная функция экранирования (безопасность) */
+function escapeHtml(s){ return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // Wallet Selector
-    async function initWalletSelector() {
-      try {
-        const selector = await setupWalletSelector({
-          network: "testnet",
-          modules: [setupNearWallet(), setupHereWallet()],
-        });
+/* При загрузке — показываем стартовый экран (как раньше) */
+show(startScreen);
 
-        const modal = setupModal(selector, { contractId: "example.testnet" });
+/* ========== Опционально: пример вставки NEAR Wallet (вариант A, redirect на testnet wallet)
+   Если хочешь, чтобы requestSignIn работал прямо сейчас — скажи, и я раскомментирую этот блок
+   и добавлю CDN near-api-js (jsdelivr) и минимальную init-функцию, не меняя структуру.
+   Примечание: в Telegram WebView некоторый CDN может блокироваться — я подскажу резерв.
+*/
 
-        document.getElementById("connectWalletBtn").onclick = async () => {
-          modal.show();
-        };
+/* ========== Опционально: Wallet Selector (вариант B)
+   Я могу прямо сюда вставить рабочий модульный код wallet-selector (modal) и сделать кнопку
+   connectBtn -> modal.show(), но для этого нужно:
+     • либо хостить файл как module (type="module") — и Telegram WebView должен поддерживать ESM imports;
+     • либо подключать ESM через jsDelivr (как я присылал ранее).
+   Скажи, какой вариант предпочитаешь —  A (redirect через near-api-js) или B (wallet-selector modal).
+   Я внедрю готовый код прямо в этот файл и всё будет работать в том же интерфейсе.
+*/
 
-        const state = selector.store.getState();
-        if (state.accounts.length > 0) {
-          const accountId = state.accounts[0].accountId;
-          walletInfo.textContent = `Подключён: ${accountId}`;
-        }
-
-        selector.store.observable.subscribe(async (nextState) => {
-          if (nextState.accounts.length > 0) {
-            const accountId = nextState.accounts[0].accountId;
-            walletInfo.textContent = `Подключён: ${accountId}`;
-          } else {
-            walletInfo.textContent = "";
-          }
-        });
-
-        console.log("✅ Wallet Selector готов");
-      } catch (err) {
-        console.error("Ошибка Wallet Selector:", err);
-        alert("Не удалось инициализировать Wallet Selector");
-      }
-    }
-
-    initWalletSelector();
-  </script>
+</script>
 </body>
 </html>
