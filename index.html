@@ -3,165 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clarity Chain</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>Clarity Chain – Участие в эксперименте</title>
+  <script src="https://unpkg.com/near-wallet-selector@latest/dist/browser-wallet-selector.js"></script>
+  <script src="https://unpkg.com/near-wallet-selector-modal-ui@latest/dist/browser-wallet-selector-modal-ui.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/near-wallet-selector-modal-ui@latest/dist/browser-wallet-selector-modal-ui.css" />
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #000;
+      background-color: #0d0d0d;
       color: #fff;
-      font-family: "Inter", sans-serif;
+      font-family: Arial, sans-serif;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      align-items: center;
       height: 100vh;
-      flex-direction: column;
-      text-align: center;
-      transition: all 0.4s ease;
     }
-    h1 {
-      color: #00aaff;
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
-    p {
-      font-size: 15px;
-      color: #ccc;
-      margin-bottom: 30px;
-    }
+    h1 { margin-bottom: 40px; }
     button {
-      background-color: #00aaff;
-      color: #fff;
+      background: #06d6a0;
+      color: #000;
       border: none;
+      padding: 15px 30px;
       border-radius: 8px;
-      padding: 12px 24px;
-      font-size: 16px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      font-size: 18px;
+      margin-top: 20px;
+      transition: 0.2s;
     }
-    button:hover {
-      background-color: #0088cc;
-    }
-    .hidden {
-      display: none;
-    }
-    .menu button {
-      display: block;
-      width: 220px;
-      margin: 12px auto;
-    }
-    .wallet-form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .wallet-form input {
-      padding: 10px;
-      width: 220px;
-      margin-bottom: 15px;
-      border: 1px solid #333;
-      border-radius: 6px;
-      background-color: #111;
-      color: #fff;
+    button:hover { background: #05b588; }
+    #wallet-info {
+      margin-top: 30px;
+      font-size: 16px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px 20px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <!-- Стартовый экран -->
-  <div id="start-screen">
-    <h1>Clarity Chain</h1>
-    <p>Погрузись в эксперимент прозрачной экономики</p>
-    <button id="startBtn">Начать</button>
-  </div>
-
-  <!-- Главное меню -->
-  <div id="menu" class="hidden menu">
-    <h1>Главное меню</h1>
-    <button id="whereBtn">Где я?</button>
-    <button id="experimentBtn">Участвовать в эксперименте</button>
-    <button id="statsBtn">Статистика</button>
-  </div>
-
-  <!-- Экран эксперимента -->
-  <div id="experiment" class="hidden">
-    <h1>Подключи NEAR кошелёк</h1>
-    <div class="wallet-form">
-      <input type="text" id="walletInput" placeholder="Введи адрес кошелька NEAR" />
-      <button id="connectWalletBtn">Подключить</button>
-    </div>
-    <button id="backToMenu">Назад</button>
-  </div>
-
-  <!-- Экран "Где я?" -->
-  <div id="where" class="hidden">
-    <h1>Где я?</h1>
-    <p>Ты находишься в тестовой версии проекта Clarity Chain.  
-       Здесь мы создаём экспериментальную модель прозрачной экономики на блокчейне NEAR.</p>
-    <button id="backFromWhere">Назад</button>
-  </div>
-
-  <!-- Экран "Статистика" -->
-  <div id="stats" class="hidden">
-    <h1>Статистика</h1>
-    <p>Здесь скоро появятся данные об активности пользователей и транзакциях.</p>
-    <button id="backFromStats">Назад</button>
-  </div>
+  <h1>Участвуй в эксперименте Clarity Chain</h1>
+  <button id="connect-wallet">Подключить кошелёк NEAR</button>
+  <div id="wallet-info"></div>
 
   <script>
-    const startScreen = document.getElementById('start-screen');
-    const menu = document.getElementById('menu');
-    const experiment = document.getElementById('experiment');
-    const where = document.getElementById('where');
-    const stats = document.getElementById('stats');
+    async function initWallet() {
+      // Создаем селектор для testnet
+      const selector = await window.nearWalletSelector.init({
+        network: "testnet",
+        modules: [
+          window.nearWalletSelector.setupMyNearWallet(),
+          window.nearWalletSelector.setupMeteorWallet(),
+          window.nearWalletSelector.setupSender(),
+        ],
+      });
 
-    document.getElementById('startBtn').addEventListener('click', () => {
-      startScreen.classList.add('hidden');
-      menu.classList.remove('hidden');
-    });
+      const modal = window.nearWalletSelectorModal.setupModal(selector, {
+        contractId: "example-contract.testnet",
+      });
 
-    document.getElementById('experimentBtn').addEventListener('click', () => {
-      menu.classList.add('hidden');
-      experiment.classList.remove('hidden');
-    });
+      const accountState = document.getElementById("wallet-info");
+      const connectBtn = document.getElementById("connect-wallet");
 
-    document.getElementById('whereBtn').addEventListener('click', () => {
-      menu.classList.add('hidden');
-      where.classList.remove('hidden');
-    });
+      const wallet = await selector.wallet();
 
-    document.getElementById('statsBtn').addEventListener('click', () => {
-      menu.classList.add('hidden');
-      stats.classList.remove('hidden');
-    });
-
-    // Возврат в меню
-    document.getElementById('backToMenu').addEventListener('click', () => {
-      experiment.classList.add('hidden');
-      menu.classList.remove('hidden');
-    });
-
-    document.getElementById('backFromWhere').addEventListener('click', () => {
-      where.classList.add('hidden');
-      menu.classList.remove('hidden');
-    });
-
-    document.getElementById('backFromStats').addEventListener('click', () => {
-      stats.classList.add('hidden');
-      menu.classList.remove('hidden');
-    });
-
-    // Подключение кошелька (эмуляция)
-    document.getElementById('connectWalletBtn').addEventListener('click', () => {
-      const wallet = document.getElementById('walletInput').value.trim();
-      if (!wallet) {
-        alert('Введите адрес кошелька!');
-        return;
+      // Проверяем — уже подключен?
+      const accounts = await selector.store.getState().accounts;
+      const active = accounts.find(a => a.active);
+      if (active) {
+        accountState.innerHTML = "🔗 Подключен кошелёк: <b>" + active.accountId + "</b>";
+        connectBtn.textContent = "Отключить кошелёк";
       }
-      alert('Кошелёк ' + wallet + ' успешно подключен!');
-      experiment.classList.add('hidden');
-      menu.classList.remove('hidden');
-    });
+
+      // Обработка клика
+      connectBtn.addEventListener("click", async () => {
+        const current = selector.store.getState().accounts.find(a => a.active);
+        if (!current) {
+          modal.show();
+        } else {
+          await wallet.signOut();
+          location.reload();
+        }
+      });
+
+      // Подписка на изменения
+      selector.store.observable.subscribe((state) => {
+        const active = state.accounts.find(a => a.active);
+        if (active) {
+          accountState.innerHTML = "🔗 Подключен кошелёк: <b>" + active.accountId + "</b>";
+          connectBtn.textContent = "Отключить кошелёк";
+        } else {
+          accountState.innerHTML = "";
+          connectBtn.textContent = "Подключить кошелёк NEAR";
+        }
+      });
+    }
+
+    initWallet();
   </script>
 </body>
 </html>
