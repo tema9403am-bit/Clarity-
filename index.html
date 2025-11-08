@@ -1,125 +1,167 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import * as nearAPI from "near-api-js";
-
-function App() {
-  const [activeTab, setActiveTab] = useState("where");
-  const [wallet, setWallet] = useState(null);
-  const [accountId, setAccountId] = useState("");
-
-  // Инициализация NEAR при загрузке
-  useEffect(() => {
-    const initNear = async () => {
-      const { connect, keyStores, WalletConnection } = nearAPI;
-
-      const keyStore = new keyStores.BrowserLocalStorageKeyStore();
-      const config = {
-        networkId: "testnet",
-        keyStore,
-        nodeUrl: "https://rpc.testnet.near.org",
-        walletUrl: "https://wallet.testnet.near.org",
-        helperUrl: "https://helper.testnet.near.org",
-      };
-
-      const near = await connect(config);
-      const walletConnection = new WalletConnection(near);
-
-      setWallet(walletConnection);
-
-      if (walletConnection.isSignedIn()) {
-        setAccountId(walletConnection.getAccountId());
-      }
-    };
-
-    initNear();
-  }, []);
-
-  // Обработчик подключения NEAR
-  const handleConnectWallet = () => {
-    if (!wallet) return;
-    wallet.requestSignIn({
-      contractId: "", // при необходимости добавим сюда контракт
-    });
-  };
-
-  // Обработчик выхода
-  const handleLogout = () => {
-    if (!wallet) return;
-    wallet.signOut();
-    setAccountId("");
-  };
-
-  // Отображение контента вкладок
-  const renderContent = () => {
-    switch (activeTab) {
-      case "where":
-        return (
-          <div className="content">
-            <h2>Ты находишься внутри экосистемы Clarity Chain</h2>
-            <p>Платформа прозрачной экономики и открытых экспериментов.</p>
-          </div>
-        );
-      case "participate":
-        return (
-          <div className="content">
-            <h2>Участвуй в эксперименте</h2>
-            {accountId ? (
-              <>
-                <p>Ты подключен как: <b>{accountId}</b></p>
-                <button className="connect-btn" onClick={handleLogout}>
-                  Выйти
-                </button>
-              </>
-            ) : (
-              <>
-                <p>Подключи NEAR кошелёк, чтобы начать участие.</p>
-                <button className="connect-btn" onClick={handleConnectWallet}>
-                  Подключить NEAR кошелёк
-                </button>
-              </>
-            )}
-          </div>
-        );
-      case "stats":
-        return (
-          <div className="content">
-            <h2>Статистика</h2>
-            <p>Здесь будет отображаться аналитика сети Clarity Chain.</p>
-          </div>
-        );
-      default:
-        return null;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clarity Chain</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: "Inter", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      text-align: center;
+      transition: all 0.4s ease;
     }
-  };
+    h1 {
+      color: #00aaff;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 15px;
+      color: #ccc;
+      margin-bottom: 30px;
+    }
+    button {
+      background-color: #00aaff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #0088cc;
+    }
+    .hidden {
+      display: none;
+    }
+    .menu button {
+      display: block;
+      width: 220px;
+      margin: 12px auto;
+    }
+    .wallet-form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .wallet-form input {
+      padding: 10px;
+      width: 220px;
+      margin-bottom: 15px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background-color: #111;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Стартовый экран -->
+  <div id="start-screen">
+    <h1>Clarity Chain</h1>
+    <p>Погрузись в эксперимент прозрачной экономики</p>
+    <button id="startBtn">Начать</button>
+  </div>
 
-  return (
-    <div className="app">
-      <header className="header">
-        <nav className="nav">
-          <button
-            className={activeTab === "where" ? "active" : ""}
-            onClick={() => setActiveTab("where")}
-          >
-            Где я?
-          </button>
-          <button
-            className={activeTab === "participate" ? "active" : ""}
-            onClick={() => setActiveTab("participate")}
-          >
-            Участвовать в эксперименте
-          </button>
-          <button
-            className={activeTab === "stats" ? "active" : ""}
-            onClick={() => setActiveTab("stats")}
-          >
-            Статистика
-          </button>
-        </nav>
-      </header>
+  <!-- Главное меню -->
+  <div id="menu" class="hidden menu">
+    <h1>Главное меню</h1>
+    <button id="whereBtn">Где я?</button>
+    <button id="experimentBtn">Участвовать в эксперименте</button>
+    <button id="statsBtn">Статистика</button>
+  </div>
 
-      <main className="main">{renderContent()}</main>
+  <!-- Экран эксперимента -->
+  <div id="experiment" class="hidden">
+    <h1>Подключи NEAR кошелёк</h1>
+    <div class="wallet-form">
+      <input type="text" id="walletInput" placeholder="Введи адрес кошелька NEAR" />
+      <button id="connectWalletBtn">Подключить</button>
     </div>
-  );
-}
+    <button id="backToMenu">Назад</button>
+  </div>
 
-export default App;
+  <!-- Экран "Где я?" -->
+  <div id="where" class="hidden">
+    <h1>Где я?</h1>
+    <p>Ты находишься в тестовой версии проекта Clarity Chain.  
+       Здесь мы создаём экспериментальную модель прозрачной экономики на блокчейне NEAR.</p>
+    <button id="backFromWhere">Назад</button>
+  </div>
+
+  <!-- Экран "Статистика" -->
+  <div id="stats" class="hidden">
+    <h1>Статистика</h1>
+    <p>Здесь скоро появятся данные об активности пользователей и транзакциях.</p>
+    <button id="backFromStats">Назад</button>
+  </div>
+
+  <script>
+    const startScreen = document.getElementById('start-screen');
+    const menu = document.getElementById('menu');
+    const experiment = document.getElementById('experiment');
+    const where = document.getElementById('where');
+    const stats = document.getElementById('stats');
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      startScreen.classList.add('hidden');
+      menu.classList.remove('hidden');
+    });
+
+    document.getElementById('experimentBtn').addEventListener('click', () => {
+      menu.classList.add('hidden');
+      experiment.classList.remove('hidden');
+    });
+
+    document.getElementById('whereBtn').addEventListener('click', () => {
+      menu.classList.add('hidden');
+      where.classList.remove('hidden');
+    });
+
+    document.getElementById('statsBtn').addEventListener('click', () => {
+      menu.classList.add('hidden');
+      stats.classList.remove('hidden');
+    });
+
+    // Возврат в меню
+    document.getElementById('backToMenu').addEventListener('click', () => {
+      experiment.classList.add('hidden');
+      menu.classList.remove('hidden');
+    });
+
+    document.getElementById('backFromWhere').addEventListener('click', () => {
+      where.classList.add('hidden');
+      menu.classList.remove('hidden');
+    });
+
+    document.getElementById('backFromStats').addEventListener('click', () => {
+      stats.classList.add('hidden');
+      menu.classList.remove('hidden');
+    });
+
+    // Подключение кошелька (эмуляция)
+    document.getElementById('connectWalletBtn').addEventListener('click', () => {
+      const wallet = document.getElementById('walletInput').value.trim();
+      if (!wallet) {
+        alert('Введите адрес кошелька!');
+        return;
+      }
+      alert('Кошелёк ' + wallet + ' успешно подключен!');
+      experiment.classList.add('hidden');
+      menu.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
