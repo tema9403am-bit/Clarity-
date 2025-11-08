@@ -15,10 +15,23 @@
   <p>Тестовая версия мини-приложения.</p>
   <button onclick="sendData()">Подтвердить вход</button>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    if (tg) tg.expand();
-    function sendData(){ if (tg) tg.sendData('user_approved'); alert('Отправлено'); }
-  </script>
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  const user = tg.initDataUnsafe?.user;
+
+  if (user) {
+    document.body.innerHTML += `
+      <p style="color:#aaa;margin-top:10px;">Привет, ${user.first_name || 'гость'} 👋</p>
+      <img src="${user.photo_url || ''}" style="width:80px;border-radius:50%;margin-top:10px;"/>
+    `;
+  }
+
+  document.getElementById("actionBtn").addEventListener("click", () => {
+    tg.sendData("Пользователь подтвердил вход");
+    alert("Вход подтвержден ✅");
+  });
+</script>
 </body>
 </html>
