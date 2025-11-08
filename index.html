@@ -1,165 +1,125 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clarity Chain</title>
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import * as nearAPI from "near-api-js";
 
-  <script src="https://unpkg.com/near-wallet-selector@latest/dist/browser-wallet-selector.js"></script>
-  <script src="https://unpkg.com/near-wallet-selector-modal-ui@latest/dist/browser-wallet-selector-modal-ui.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/near-wallet-selector-modal-ui@latest/dist/browser-wallet-selector-modal-ui.css" />
+function App() {
+  const [activeTab, setActiveTab] = useState("where");
+  const [wallet, setWallet] = useState(null);
+  const [accountId, setAccountId] = useState("");
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #0d0d0d;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header {
-      display: flex;
-      justify-content: space-around;
-      background: #111;
-      padding: 15px 0;
-      border-bottom: 1px solid #333;
-    }
-    header button {
-      background: none;
-      border: none;
-      color: #aaa;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    header button.active {
-      color: #06d6a0;
-      border-bottom: 2px solid #06d6a0;
-      padding-bottom: 2px;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 20px;
-    }
-    #wallet-info {
-      margin-top: 20px;
-      font-size: 16px;
-      background: rgba(255,255,255,0.1);
-      padding: 10px 20px;
-      border-radius: 8px;
-    }
-    .hidden { display: none; }
+  // Инициализация NEAR при загрузке
+  useEffect(() => {
+    const initNear = async () => {
+      const { connect, keyStores, WalletConnection } = nearAPI;
 
-    button.action {
-      background: #06d6a0;
-      color: #000;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 18px;
-      margin-top: 20px;
-      transition: 0.2s;
-    }
-    button.action:hover { background: #05b588; }
-  </style>
-</head>
-<body>
-
-  <header>
-    <button class="tab-btn active" data-tab="where">Где я?</button>
-    <button class="tab-btn" data-tab="experiment">Участвовать в эксперименте</button>
-    <button class="tab-btn" data-tab="stats">Статистика</button>
-  </header>
-
-  <main>
-    <section id="where" class="tab active">
-      <h1>Ты находишься внутри экосистемы Clarity Chain</h1>
-      <p style="margin-top:20px; color:#aaa;">Платформа прозрачной экономики и открытых экспериментов.</p>
-    </section>
-
-    <section id="experiment" class="tab hidden">
-      <h1>Участвуй в эксперименте Clarity Chain</h1>
-      <button id="connect-wallet" class="action">Подключить кошелёк NEAR</button>
-      <div id="wallet-info"></div>
-    </section>
-
-    <section id="stats" class="tab hidden">
-      <h1>Статистика сети</h1>
-      <p style="margin-top:20px; color:#aaa;">Данные появятся после подключения к сети.</p>
-    </section>
-  </main>
-
-  <script>
-    // Переключение вкладок
-    const tabs = document.querySelectorAll(".tab");
-    const buttons = document.querySelectorAll(".tab-btn");
-
-    buttons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        buttons.forEach(b => b.classList.remove("active"));
-        tabs.forEach(t => t.classList.add("hidden"));
-
-        btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.remove("hidden");
-      });
-    });
-
-    // NEAR Wallet подключение
-    async function initWallet() {
-      const selector = await window.nearWalletSelector.init({
-        network: "testnet",
-        modules: [
-          window.nearWalletSelector.setupMyNearWallet(),
-          window.nearWalletSelector.setupMeteorWallet(),
-          window.nearWalletSelector.setupSender(),
-        ],
-      });
-
-      const modal = window.nearWalletSelectorModal.setupModal(selector, {
-        contractId: "example-contract.testnet",
-      });
-
-      const connectBtn = document.getElementById("connect-wallet");
-      const walletInfo = document.getElementById("wallet-info");
-      const wallet = await selector.wallet();
-
-      const updateUI = () => {
-        const state = selector.store.getState();
-        const active = state.accounts.find(a => a.active);
-        if (active) {
-          walletInfo.innerHTML = "🔗 Подключен кошелёк: <b>" + active.accountId + "</b>";
-          connectBtn.textContent = "Отключить кошелёк";
-        } else {
-          walletInfo.innerHTML = "";
-          connectBtn.textContent = "Подключить кошелёк NEAR";
-        }
+      const keyStore = new keyStores.BrowserLocalStorageKeyStore();
+      const config = {
+        networkId: "testnet",
+        keyStore,
+        nodeUrl: "https://rpc.testnet.near.org",
+        walletUrl: "https://wallet.testnet.near.org",
+        helperUrl: "https://helper.testnet.near.org",
       };
 
-      updateUI();
+      const near = await connect(config);
+      const walletConnection = new WalletConnection(near);
 
-      connectBtn.addEventListener("click", async () => {
-        const state = selector.store.getState();
-        const active = state.accounts.find(a => a.active);
+      setWallet(walletConnection);
 
-        if (active) {
-          await wallet.signOut();
-          updateUI();
-        } else {
-          modal.show();
-        }
-      });
+      if (walletConnection.isSignedIn()) {
+        setAccountId(walletConnection.getAccountId());
+      }
+    };
 
-      selector.store.observable.subscribe(updateUI);
+    initNear();
+  }, []);
+
+  // Обработчик подключения NEAR
+  const handleConnectWallet = () => {
+    if (!wallet) return;
+    wallet.requestSignIn({
+      contractId: "", // при необходимости добавим сюда контракт
+    });
+  };
+
+  // Обработчик выхода
+  const handleLogout = () => {
+    if (!wallet) return;
+    wallet.signOut();
+    setAccountId("");
+  };
+
+  // Отображение контента вкладок
+  const renderContent = () => {
+    switch (activeTab) {
+      case "where":
+        return (
+          <div className="content">
+            <h2>Ты находишься внутри экосистемы Clarity Chain</h2>
+            <p>Платформа прозрачной экономики и открытых экспериментов.</p>
+          </div>
+        );
+      case "participate":
+        return (
+          <div className="content">
+            <h2>Участвуй в эксперименте</h2>
+            {accountId ? (
+              <>
+                <p>Ты подключен как: <b>{accountId}</b></p>
+                <button className="connect-btn" onClick={handleLogout}>
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <>
+                <p>Подключи NEAR кошелёк, чтобы начать участие.</p>
+                <button className="connect-btn" onClick={handleConnectWallet}>
+                  Подключить NEAR кошелёк
+                </button>
+              </>
+            )}
+          </div>
+        );
+      case "stats":
+        return (
+          <div className="content">
+            <h2>Статистика</h2>
+            <p>Здесь будет отображаться аналитика сети Clarity Chain.</p>
+          </div>
+        );
+      default:
+        return null;
     }
+  };
 
-    initWallet();
-  </script>
-</body>
-</html>
+  return (
+    <div className="app">
+      <header className="header">
+        <nav className="nav">
+          <button
+            className={activeTab === "where" ? "active" : ""}
+            onClick={() => setActiveTab("where")}
+          >
+            Где я?
+          </button>
+          <button
+            className={activeTab === "participate" ? "active" : ""}
+            onClick={() => setActiveTab("participate")}
+          >
+            Участвовать в эксперименте
+          </button>
+          <button
+            className={activeTab === "stats" ? "active" : ""}
+            onClick={() => setActiveTab("stats")}
+          >
+            Статистика
+          </button>
+        </nav>
+      </header>
+
+      <main className="main">{renderContent()}</main>
+    </div>
+  );
+}
+
+export default App;
