@@ -2,147 +2,126 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clarity MiniApp</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clarity Chain</title>
   <style>
-    body{background:#0b0b0b;color:#fff;font-family:Arial,sans-serif;text-align:center;padding:40px}
-    h1{color:#00aeef} button{background:#00aeef;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:16px;cursor:pointer;margin-top:20px}
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      <div id="loader">
-  <div class="spinner"></div>
-</div>
+      margin: 0;
+      background: #0d0d0d;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      overflow: hidden;
+    }
 
-<div id="app" style="display: none;">
-  <h1>Clarity Chain</h1>
-  <p>Тестовая версия мини-приложения.</p>
-  <button>Подтвердить вход</button>
-  <p>Привет, Greedy 👋</p>
-  <img src="avatar.png" alt="Avatar">
-</div>
-#loader {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #111;
-  z-index: 999;
-}
+    #loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #0d0d0d;
+      z-index: 9999;
+    }
 
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #222;
-  border-top-color: #00A8FF;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #222;
+      border-top-color: #00A8FF;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-.fade-in {
-  animation: fadeIn 0.6s ease forwards;
-}
+    #app {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 80px 20px 20px; /* отступ сверху, чтобы не прилипало к статус-бару Telegram */
+    }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const loader = document.getElementById("loader");
-  const app = document.getElementById("app");
+    h1 {
+      color: #00A8FF;
+      margin: 0;
+      font-size: 32px;
+    }
 
-  setTimeout(() => {
-    loader.style.display = "none";
-    app.style.display = "flex";
-    app.classList.add("fade-in");
-  }, 1000); // задержка в 1 секунду для имитации загрузки
-});
-</script>
-  margin: 0;
-  padding: 0 16px;
-  background-color: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* по центру по вертикали */
-  align-items: center;     /* по центру по горизонтали */
-  box-sizing: border-box;
-}
+    p {
+      margin: 0;
+      font-size: 16px;
+      opacity: 0.85;
+    }
 
-h1 {
-  font-size: 26px;
-  margin-bottom: 12px;
-  color: #00A8FF;
-}
+    button {
+      background: #00A8FF;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
 
-p {
-  font-size: 16px;
-  margin-bottom: 24px;
-  opacity: 0.85;
-}
+    button:hover {
+      background: #0090DD;
+    }
 
-button {
-  background-color: #00A8FF;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s ease;
-}
+    .fade-in {
+      animation: fadeIn 0.6s ease forwards;
+    }
 
-button:hover {
-  background-color: #008BD1;
-}
-
-img {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  margin-top: 24px;
-  border: 2px solid #333;
-}
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <h1>Clarity Chain</h1>
-  <p>Тестовая версия мини-приложения.</p>
-  <button onclick="sendData()">Подтвердить вход</button>
+  <div id="loader">
+    <div class="spinner"></div>
+  </div>
 
-<script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
+  <div id="app">
+    <h1>Clarity Chain</h1>
+    <p>Тестовая версия мини-приложения.</p>
+    <button id="confirmBtn">Подтвердить вход</button>
+    <p>Привет, Greedy 👋</p>
+  </div>
 
-  const user = tg.initDataUnsafe?.user;
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const loader = document.getElementById("loader");
+      const app = document.getElementById("app");
+      const confirmBtn = document.getElementById("confirmBtn");
 
-  if (user) {
-    document.body.innerHTML += `
-      <p style="color:#aaa;margin-top:10px;">Привет, ${user.first_name || 'гость'} 👋</p>
-      <img src="${user.photo_url || ''}" style="width:80px;border-radius:50%;margin-top:10px;"/>
-    `;
-  }
+      // имитация загрузки
+      setTimeout(() => {
+        loader.style.display = "none";
+        app.style.display = "flex";
+        app.classList.add("fade-in");
+      }, 1000);
 
-  document.getElementById("actionBtn").addEventListener("click", () => {
-    tg.sendData("Пользователь подтвердил вход");
-    alert("Вход подтвержден ✅");
-  });
-</script>
+      // обработчик кнопки
+      confirmBtn.addEventListener("click", () => {
+        confirmBtn.textContent = "Вход подтвержден ✅";
+        confirmBtn.style.background = "#2ECC71";
+      });
+    });
+  </script>
 </body>
 </html>
