@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Clarity Chain — Hot Wallet</title>
 
+<!-- Telegram Web App SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
   :root{--bg:#000;--muted:#8f98a0;--accent:#00aaff}
   html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial}
@@ -17,6 +20,7 @@
   .menu .btn{display:block;width:86%;max-width:360px;margin:10px auto}
   input[type="text"], input[type="number"]{padding:10px;width:86%;max-width:360px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;margin:8px 0}
   .small{font-size:13px;color:#bbb;margin-top:10px}
+  .info{color:#ffd54a;font-size:14px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -41,6 +45,7 @@
       <h1>Участвуй в эксперименте</h1>
       <button id="connectHotWallet" class="btn">Подключить Hot Wallet</button>
       <div id="walletState" class="small" style="margin-top:10px"></div>
+      <div id="infoBox" class="info hidden"></div>
       <div style="margin-top:14px">
         <button id="backToMenu" class="btn ghost">Назад</button>
       </div>
@@ -63,6 +68,7 @@
 
 <script>
 (async function(){
+  // DOM
   const startScreen = document.getElementById('startScreen');
   const mainMenu = document.getElementById('mainMenu');
   const experimentScreen = document.getElementById('experimentScreen');
@@ -70,6 +76,7 @@
   const statsScreen = document.getElementById('statsScreen');
   const walletState = document.getElementById('walletState');
   const debug = document.getElementById('debug');
+  const infoBox = document.getElementById('infoBox');
 
   // Навигация
   document.getElementById('startBtn').onclick = ()=>{ startScreen.classList.add('hidden'); mainMenu.classList.remove('hidden'); };
@@ -80,42 +87,122 @@
   document.getElementById('experimentBtn').onclick = ()=>{ mainMenu.classList.add('hidden'); experimentScreen.classList.remove('hidden'); };
   document.getElementById('backToMenu').onclick = ()=>{ experimentScreen.classList.add('hidden'); mainMenu.classList.remove('hidden'); };
 
-  // Проверяем, Telegram ли это
-  const tg = window.Telegram?.WebApp;
-  if (!tg) {
-    walletState.innerHTML = "⚠️ Открой приложение через Telegram Mini App!";
-    debug.innerText = "Не обнаружен Telegram WebApp API";
+  // Проверяем Telegram WebApp
+  // Telegram SDK добавлен в <head>, но ещё не гарантировано готов к использованию —
+  // используем безопасную проверку и обработчики.
+  function noTg(message){
+    walletState.innerHTML = "⚠️ Открой приложение через кнопку бота в Telegram (Mini App).";
+    debug.innerText = "Telegram WebApp API не обнаружен. " + (message || "");
+    infoBox.classList.remove('hidden');
+    infoBox.textContent = "Открой мини-приложение через кнопку бота в Telegram (не в браузере).";
+  }
+
+  // window.Telegram may exist but WebApp might not be ready instantly; guard carefully.
+  const tg = window.Telegram;
+
+  if(!tg || !tg.WebApp){
+    noTg("window.Telegram или Telegram.WebApp отсутствует");
     return;
   }
 
-  tg.ready();
-  tg.expand();
+  // Получили tg.WebApp
+  const WebApp = tg.WebApp;
 
-  // Подключение Hot Wallet
+  try {
+    // Инициализация безопасно: ready() может быть вызван много раз — это нормально.
+    if(typeof WebApp.ready === 'function') WebApp.ready();
+    // Попробуем расширить webview (если поддерживается)
+    if(typeof WebApp.expand === 'function') {
+      try { WebApp.expand(); } catch(e) { /* ignore non-critical */ }
+    }
+
+    debug.innerText = "Telegram WebApp API доступен";
+    walletState.innerHTML = "🔌 Подключено к Telegram WebApp";
+
+    // Показать пользователю небольшую подсказку, если initData отсутствует
+    if(!WebApp.initData && !WebApp.initDataUnsafe){
+      infoBox.classList.remove('hidden');
+      infoBox.textContent = "Если данные пользователя не приходят — откройте приложение через кнопку бота (web_app).";
+    } else {
+      infoBox.classList.add('hidden');
+    }
+
+  } catch(err){
+    noTg("Ошибка инициализации WebApp: " + (err.message||err));
+    return;
+  }
+
+  // Обработчик подключения Hot Wallet — принятый flow для Hot Wallet в Telegram:
+  // Обычно Hot Wallet интеграция делается через Web App метод 'requestHotWallet' (если доступен)
+  // Но Telegram не имеет стандартизированного метода 'requestHotWallet' в публичном SDK.
+  // Поэтому здесь делаем практичный универсальный подход:
+  // 1) Если WebApp has "initDataUnsafe.user", возьмём telegram id для backend.
+  // 2) Отправим запрос на backend (placeholder URL). Если бекенда нет — имитируем успех.
+  // 3) Выведем понятный UI результат.
+
   document.getElementById('connectHotWallet').onclick = async () => {
-    try {
-      const user = tg.initDataUnsafe?.user;
-      if (!user) {
-        walletState.innerHTML = "🚫 Не удалось получить данные Telegram.";
+    walletState.innerHTML = "⏳ Подключение Hot Wallet...";
+    // Забираем данные Telegram (безопасно через initDataUnsafe)
+    const user = WebApp.initDataUnsafe && WebApp.initDataUnsafe.user ? WebApp.initDataUnsafe.user : null;
+
+    if(!user){
+      // Попытка получить initData через WebApp.initData (подпись) — чаще безопасно на backend.
+      if(WebApp.initData){
+        // initData присутствует — но разбор подписанного initData требует backend-валидации.
+        // Мы сообщим пользователю и предложим отправить на бекенд.
+        walletState.innerHTML = "ℹ️ Пользователь найден (требуется бекенд для валидации initData).";
+        debug.innerText = "initData присутствует, но подпись не проверена (на бекенде).";
+      } else {
+        walletState.innerHTML = "🚫 Не удалось получить данные Telegram (user отсутствует).";
         return;
       }
+    }
 
-      // Отправка запроса на сервер (опционально)
-      const response = await fetch("https://your-backend.com/api/connect-hotwallet", {
+    // Формируем payload для бекенда
+    const payload = {
+      telegram_id: user ? user.id : null,
+      username: user ? user.username : null,
+      first_name: user ? user.first_name : null,
+      // при наличии initData — отправьте её для валидации на бекенд (если есть)
+      initData: WebApp.initData || null
+    };
+
+    // Здесь укажи реальный URL своего бэкенда, который реализует логику Hot Wallet (placeholder сейчас)
+    const BACKEND_URL = "https://your-backend.example.com/api/connect-hotwallet"; // заменить на свой
+
+    // Если бекенд не настроен — имитируем локальную "успешную" привязку (для теста UI).
+    if(!BACKEND_URL || BACKEND_URL.includes("your-backend")){
+      // симулируем задержку
+      await new Promise(r => setTimeout(r, 800));
+      walletState.innerHTML = `✅ Hot Wallet (симуляция) привязан для ${user ? ("@" + (user.username || user.id)) : "пользователя"}`;
+      debug.innerText = "Backend не настроен — симуляция завершена. Замените BACKEND_URL на ваш реальный URL.";
+      return;
+    }
+
+    // Если бекенд указан — пробуем отправить
+    try {
+      const res = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram_id: user.id, username: user.username })
+        body: JSON.stringify(payload)
       });
-
-      const data = await response.json();
-      if (data.success) {
-        walletState.innerHTML = `✅ Hot Wallet подключён для пользователя <b>@${user.username || user.id}</b>`;
-      } else {
-        walletState.innerHTML = "Ошибка при подключении Hot Wallet.";
+      if(!res.ok){
+        const txt = await res.text();
+        walletState.innerHTML = "❌ Ошибка на сервере при подключении Hot Wallet.";
+        debug.innerText = `Backend error: ${res.status} ${txt}`;
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      walletState.innerHTML = "❌ Ошибка подключения Hot Wallet.";
+      const json = await res.json();
+      if(json && json.success){
+        walletState.innerHTML = `✅ Hot Wallet привязан: ${json.account || (user ? ("@" + (user.username || user.id)) : "пользователь")}`;
+        debug.innerText = "Подключение прошло успешно (по ответу бекенда).";
+      } else {
+        walletState.innerHTML = "❌ Подключение не удалось (бекенд ответил ошибкой).";
+        debug.innerText = "Response: " + JSON.stringify(json);
+      }
+    } catch(err){
+      walletState.innerHTML = "❌ Ошибка сети при подключении Hot Wallet.";
+      debug.innerText = "Fetch error: " + (err.message||err);
     }
   };
 
